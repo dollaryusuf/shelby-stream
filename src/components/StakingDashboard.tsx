@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, Wallet, ShieldCheck, Loader2, Info, ArrowUpRight, Lock, Users, PieChart } from 'lucide-react';
 import { useShelby } from '../context/ShelbyContext';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { useStakingROI } from '../hooks/useStaking';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const StakingDashboard: React.FC = () => {
@@ -9,14 +10,9 @@ export const StakingDashboard: React.FC = () => {
   const { connected } = useWallet();
   const [stakeAmount, setStakeAmount] = useState<number>(100);
   const [monthlyReads, setMonthlyReads] = useState<number>(50000);
-  const [roi, setRoi] = useState<{ monthlyReturn: number; annualROI: number }>({ monthlyReturn: 0, annualROI: 0 });
+  const roi = useStakingROI(stakeAmount, monthlyReads);
   const [isStaking, setIsStaking] = useState(false);
   const [staked, setStaked] = useState(0);
-
-  useEffect(() => {
-    const result = client.calculateProjectedROI(stakeAmount, monthlyReads);
-    setRoi(result);
-  }, [stakeAmount, monthlyReads, client]);
 
   const handleStake = async () => {
     if (!connected) {

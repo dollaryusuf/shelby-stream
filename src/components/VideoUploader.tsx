@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Upload, FileVideo, ShieldCheck, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { blobify } from '../lib/shelby';
 import { useShelby } from '../context/ShelbyContext';
+import { useUpload } from '../hooks/useUpload';
+import { useAptosActions } from '../hooks/useAptos';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const VideoUploader: React.FC = () => {
   const { nodeClient } = useShelby();
+  const { uploading, progress, uploadBlob } = useUpload();
+  const { registerContent } = useAptosActions();
   const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [blobId, setBlobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pricePerGb, setPricePerGb] = useState<number>(0.05); // Default 0.05 APT per GB
@@ -23,35 +25,29 @@ export const VideoUploader: React.FC = () => {
   const handleUpload = async () => {
     if (!file) return;
     
-    setUploading(true);
     setError(null);
-    setProgress(0);
 
     try {
       const blob = await blobify(file);
       
-      // Simulate "Blob-ify" and upload process
       console.log(`Uploading ${file.name} to Shelby Protocol... using ${nodeClient.config.apiKey}`);
       
-      const result = await nodeClient.uploadBlob(blob, {
+      const result = await uploadBlob(blob as any, {
         metadata: { name: file.name, price: pricePerGb }
       });
       
-      // Mock progress for demo
-      for (let i = 0; i <= 100; i += 5) {
-        setProgress(i);
-        await new Promise(r => setTimeout(r, 100));
-      }
+      const mockBlobId = result.blobId;
       
-      const mockBlobId = `shelby_blob_${Math.random().toString(36).substr(2, 9)}`;
+      // Register on Aptos
+      console.log(`Registering content on Aptos: ${mockBlobId} at ${pricePerGb} APT`);
+      await registerContent(Math.floor(pricePerGb * 100000000), mockBlobId); // Convert to Octas
+      
       setBlobId(mockBlobId);
-      console.log(`Upload successful! Blob ID: ${mockBlobId}`);
+      console.log(`Upload and Registration successful! Blob ID: ${mockBlobId}`);
       
     } catch (err) {
       console.error("Upload failed:", err);
       setError("Failed to upload to Shelby Protocol. Please check your connection.");
-    } finally {
-      setUploading(false);
     }
   };
 

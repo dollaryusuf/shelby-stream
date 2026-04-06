@@ -3,6 +3,8 @@ import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import { useShelbyStream } from '../hooks/useShelbyStream';
 import { attachFiberToVideo } from '../lib/fiberLink';
+import { useAptosActions } from '../hooks/useAptos';
+import { usePurchase } from '../hooks/usePurchase';
 import { Play, Lock, Loader2, ShieldCheck, Zap, TrendingUp, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -21,6 +23,8 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<any>(null);
+  const { purchaseReadAccess } = useAptosActions();
+  const { purchasing, purchase } = usePurchase();
   const { isUnlocked, isBuffering, error, unlockStream } = useShelbyStream(blobId);
   const [showOverlay, setShowOverlay] = useState(true);
 
@@ -47,12 +51,17 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
   }, [isUnlocked, blobId]);
 
   const handleUnlock = async () => {
-    // In a real embed, we'd trigger the wallet adapter
-    // For this demo, we'll simulate the 85/10/5 revenue split
-    console.log(`Embed: Unlocking ${blobId} with Revenue Split: 85% Creator, 10% Storage Provider, 5% Platform Treasury`);
-    await unlockStream();
-    setShowOverlay(false);
+    await purchase(blobId, async () => {
+      console.log(`Embed: Unlocking ${blobId} with Revenue Split: 85% Creator, 10% Storage Provider, 5% Platform Treasury`);
+      // In a real app, we'd get the creator address from metadata
+      const mockCreatorAddress = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+      await purchaseReadAccess(mockCreatorAddress);
+      await unlockStream();
+      setShowOverlay(false);
+    });
   };
+
+  const isProcessing = isBuffering || purchasing;
 
   return (
     <div className={`relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl ${isEmbedded ? 'w-full h-full' : ''}`}>
@@ -92,14 +101,14 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
 
             <button 
               onClick={handleUnlock}
-              disabled={isBuffering}
+              disabled={isProcessing}
               className={`px-6 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${
-                isBuffering 
+                isProcessing 
                   ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
                   : 'bg-white text-slate-950 hover:bg-slate-200 shadow-xl shadow-white/5 active:scale-95'
               }`}
             >
-              {isBuffering ? (
+              {isProcessing ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
                 <Play className="w-3 h-3 fill-current" />
@@ -116,7 +125,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
       </AnimatePresence>
 
       {/* Buffering Indicator */}
-      {isBuffering && isUnlocked && (
+      {isProcessing && isUnlocked && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 backdrop-blur-sm">
           <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
         </div>

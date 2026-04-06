@@ -4,7 +4,9 @@ import 'video.js/dist/video-js.css';
 import { useShelbyStream } from '../hooks/useShelbyStream';
 import { attachFiberToVideo } from '../lib/fiberLink';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { Play, Lock, Loader2, ShieldCheck, Zap, TrendingUp, Info, Wallet } from 'lucide-react';
+import { useAptosActions } from '../hooks/useAptos';
+import { usePurchase } from '../hooks/usePurchase';
+import { Play, Lock, Loader2, ShieldCheck, Zap, TrendingUp, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface ShelbyPlayerProps {
@@ -20,7 +22,9 @@ export const ShelbyPlayer: React.FC<ShelbyPlayerProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<any>(null);
-  const { connected, signAndSubmitTransaction } = useWallet();
+  const { connected } = useWallet();
+  const { purchaseReadAccess } = useAptosActions();
+  const { purchasing, purchase } = usePurchase();
   const { isUnlocked, isBuffering, error, unlockStream } = useShelbyStream(blobId);
   const [showOverlay, setShowOverlay] = useState(true);
 
@@ -47,31 +51,17 @@ export const ShelbyPlayer: React.FC<ShelbyPlayerProps> = ({
   }, [isUnlocked, blobId]);
 
   const handleUnlock = async () => {
-    if (!connected) {
-      alert("Please connect your Aptos wallet first.");
-      return;
-    }
-
-    try {
-      // In a real app, we'd call signAndSubmitTransaction with the Move function
-      // For this demo, we'll simulate the transaction confirmation
+    await purchase(blobId, async () => {
       console.log(`Gatekeeper: Triggering Read-Grant transaction for ${blobId}...`);
-      console.log(`Revenue Split: 85% Creator, 10% Storage Provider, 5% Platform Treasury`);
-      
-      // const payload = {
-      //   type: "entry_function_payload",
-      //   function: "0x1::shelby_stream::purchase_read_access",
-      //   arguments: [creatorAddress],
-      //   type_arguments: [],
-      // };
-      // await signAndSubmitTransaction(payload);
-
+      // In a real app, this would be a real creator address from metadata
+      const mockCreatorAddress = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+      await purchaseReadAccess(mockCreatorAddress);
       await unlockStream();
       setShowOverlay(false);
-    } catch (err) {
-      console.error("Transaction failed:", err);
-    }
+    });
   };
+
+  const isProcessing = isBuffering || purchasing;
 
   return (
     <div className="relative group rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl">
@@ -119,14 +109,14 @@ export const ShelbyPlayer: React.FC<ShelbyPlayerProps> = ({
 
             <button 
               onClick={handleUnlock}
-              disabled={isBuffering}
+              disabled={isProcessing}
               className={`group relative px-12 py-4 rounded-2xl font-bold text-lg transition-all flex items-center gap-3 ${
-                isBuffering 
+                isProcessing 
                   ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
                   : 'bg-white text-slate-950 hover:bg-slate-200 shadow-xl shadow-white/5 active:scale-95'
               }`}
             >
-              {isBuffering ? (
+              {isProcessing ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Processing on Aptos...
@@ -147,7 +137,7 @@ export const ShelbyPlayer: React.FC<ShelbyPlayerProps> = ({
       </AnimatePresence>
 
       {/* Buffering Indicator */}
-      {isBuffering && isUnlocked && (
+      {isProcessing && isUnlocked && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />

@@ -1,25 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { TrendingUp, Activity, ShieldCheck, Zap } from 'lucide-react';
-import { useShelby } from '../context/ShelbyContext';
+import { useNetworkMetrics } from '../hooks/useNetwork';
 import { motion } from 'motion/react';
 
 export const LatencyMonitor: React.FC = () => {
-  const { client } = useShelby();
-  const [metrics, setMetrics] = useState<{ throughput: number; health: number }>({ throughput: 0, health: 0 });
-  const [latency, setLatency] = useState<number>(0);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const m = await client.getNetworkMetrics();
-      setMetrics(m);
-      
-      // Simulate real-time latency ping
-      const l = 10 + Math.random() * 5;
-      setLatency(l);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [client]);
+  const { metrics, latency } = useNetworkMetrics();
 
   return (
     <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 backdrop-blur-sm">

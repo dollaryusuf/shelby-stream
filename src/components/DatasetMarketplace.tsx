@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Database, Download, Zap, ShieldCheck, Loader2, Info, TrendingUp, Cpu, Lock } from 'lucide-react';
 import { useShelby } from '../context/ShelbyContext';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { useSpeedTest } from '../hooks/useSpeedTest';
+import { useAptosActions } from '../hooks/useAptos';
+import { usePurchase } from '../hooks/usePurchase';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Dataset {
@@ -43,29 +46,16 @@ const mockDatasets: Dataset[] = [
 export const DatasetMarketplace: React.FC = () => {
   const { client } = useShelby();
   const { connected } = useWallet();
-  const [latency, setLatency] = useState<{ node: string; latency: number }[] | null>(null);
-  const [testingSpeed, setTestingSpeed] = useState(false);
-  const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
-  const [purchasing, setPurchasing] = useState(false);
-  const [purchased, setPurchased] = useState<string[]>([]);
-
-  const runSpeedTest = async () => {
-    setTestingSpeed(true);
-    const results = await client.pingNearestNodes();
-    setLatency(results);
-    setTestingSpeed(false);
-  };
+  const { latency, testingSpeed, runSpeedTest } = useSpeedTest();
+  const { purchaseReadAccess } = useAptosActions();
+  const { purchasing, purchased, purchase } = usePurchase();
 
   const handlePurchase = async (datasetId: string) => {
-    if (!connected) {
-      alert("Please connect your Aptos wallet first.");
-      return;
-    }
-    setPurchasing(true);
-    // Simulate Aptos transaction
-    await new Promise(r => setTimeout(r, 2000));
-    setPurchased(prev => [...prev, datasetId]);
-    setPurchasing(false);
+    await purchase(datasetId, async () => {
+      // In a real app, we'd get the creator address from metadata
+      const mockCreatorAddress = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+      await purchaseReadAccess(mockCreatorAddress);
+    });
   };
 
   return (
