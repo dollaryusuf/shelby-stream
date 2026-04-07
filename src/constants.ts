@@ -1,5 +1,6 @@
 export const SHELBY_CONFIG = {
   TESTNET_URL: "https://fullnode.testnet.aptoslabs.com/v1",
+  CONTRACT_ADDRESS: "0x1", // Placeholder, update after deployment
   FIBER_LATENCY_PRIORITY: true,
   ERASURE_CODING_K: 10,
   ERASURE_CODING_M: 4,

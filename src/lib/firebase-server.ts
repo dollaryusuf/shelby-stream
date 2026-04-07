@@ -1,5 +1,7 @@
 import admin from 'firebase-admin';
-import firebaseConfig from '../../firebase-applet-config.json';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const firebaseConfig = require('../../firebase-applet-config.json');
 
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {

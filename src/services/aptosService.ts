@@ -1,13 +1,12 @@
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
+import { SHELBY_CONFIG } from "../constants";
 
 const config = new AptosConfig({ network: Network.TESTNET });
 export const aptos = new Aptos(config);
 
-export const SHELBY_MODULE_ADDRESS = "0x1"; // Replace with actual module address
-
 export const getPurchasePayload = (creatorAddress: string) => {
   return {
-    function: `${SHELBY_MODULE_ADDRESS}::marketplace::pay_for_read`,
+    function: `${SHELBY_CONFIG.CONTRACT_ADDRESS}::marketplace::pay_for_read`,
     typeArguments: [],
     functionArguments: [creatorAddress],
   };
@@ -15,7 +14,7 @@ export const getPurchasePayload = (creatorAddress: string) => {
 
 export const getRegisterContentPayload = (price: number, blobId: string) => {
   return {
-    function: `${SHELBY_MODULE_ADDRESS}::marketplace::register_content`,
+    function: `${SHELBY_CONFIG.CONTRACT_ADDRESS}::marketplace::register_content`,
     typeArguments: [],
     functionArguments: [price, Array.from(new TextEncoder().encode(blobId))],
   };

@@ -1,6 +1,8 @@
+import "dotenv/config";
 import express from "express";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { getShelbyNode } from "./src/lib/shelby-server";
 import { db } from "./src/lib/firebase-server";
@@ -10,6 +12,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  console.log(`Starting server in ${process.env.NODE_ENV || 'development'} mode...`);
 
   app.use(express.json());
 
@@ -74,10 +78,19 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    if (fs.existsSync(distPath)) {
+      console.log(`Serving static files from: ${distPath}`);
+      app.use(express.static(distPath));
+      app.get('*all', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    } else {
+      console.error(`Critical Error: dist directory not found at ${distPath}`);
+      // Fallback for debugging
+      app.get('*all', (req, res) => {
+        res.status(500).send("Production build (dist) missing. Please run 'npm run build'.");
+      });
+    }
   }
 
   app.listen(PORT, "0.0.0.0", () => {
