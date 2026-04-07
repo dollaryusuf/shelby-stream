@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: content
+    // Document ID: auto-generated
+    // Fields:
+    //   - blob_id: string (required) - Unique identifier for the blob on Shelby Fiber Network
+    //   - creator_wallet_address: string (required) - Wallet address of the content creator
+    //   - title: string (required) - Title of the content
+    //   - thumbnail_url: string (optional) - URL of the thumbnail image
+    //   - content_type: string (required) - MIME type of the content
+    //   - created_at: string (required, ISO 8601) - Timestamp when the content was uploaded
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidContent(data) {
+      return hasRequiredFields(['blob_id', 'creator_wallet_address', 'title', 'content_type', 'created_at']) &&
+             hasOnlyAllowedFields(['blob_id', 'creator_wallet_address', 'title', 'thumbnail_url', 'content_type', 'created_at']) &&
+             data.blob_id is string && data.blob_id.size() > 0 && data.blob_id.size() < 100 &&
+             data.creator_wallet_address is string && data.creator_wallet_address.size() > 0 && data.creator_wallet_address.size() < 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             (!('thumbnail_url' in data) || (data.thumbnail_url is string && data.thumbnail_url.size() < 1000)) &&
+             data.content_type is string && data.content_type.size() > 0 && data.content_type.size() < 50 &&
+             isValidDateString(data.created_at);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /content/{contentId} {
+      // Content is publicly readable for the "Explore" page
+      allow read: if true;
+      
+      // Only authenticated users can upload content metadata
+      // In a real app, we might check if the user's wallet matches the creator_wallet_address
+      // but since we're using Firebase Auth for metadata and Aptos for payments, 
+      // we'll allow any authenticated user to create for now, provided the data is valid.
+      allow create: if isAuthenticated() && isValidContent(request.resource.data);
+      
+      // Metadata is generally immutable once uploaded
+      allow update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

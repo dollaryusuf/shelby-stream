@@ -10,10 +10,8 @@ module shelby_stream::marketplace {
 
     struct PlatformConfig has key {
         admin: address,
-        creator_share_bps: u64,         // 8500 = 85%
-        storage_provider_share_bps: u64, // 1000 = 10%
+        creator_share_bps: u64,         // 9500 = 95%
         treasury_share_bps: u64,         // 500 = 5%
-        storage_provider_address: address,
         treasury_address: address,
     }
 
@@ -24,21 +22,18 @@ module shelby_stream::marketplace {
     }
 
     /**
-     * Initialize the marketplace with the specified treasury and storage provider addresses.
-     * Sets the default revenue split: 85% Creator, 10% Storage Provider, 5% Treasury.
+     * Initialize the marketplace with the specified treasury address.
+     * Sets the default revenue split: 95% Creator, 5% Treasury.
      */
     public entry fun initialize(
         admin: &signer, 
-        storage_provider_address: address,
         treasury_address: address
     ) {
         let admin_addr = signer::address_of(admin);
         move_to(admin, PlatformConfig {
             admin: admin_addr,
-            creator_share_bps: 8500,
-            storage_provider_share_bps: 1000,
+            creator_share_bps: 9500,
             treasury_share_bps: 500,
-            storage_provider_address,
             treasury_address,
         });
     }
@@ -57,12 +52,11 @@ module shelby_stream::marketplace {
 
     /**
      * Revenue Splitter: Accepts payment for a "Read" and distributes it.
-     * 85% -> Content Creator
-     * 10% -> Shelby Protocol Storage Provider
+     * 95% -> Content Creator
      * 5%  -> Shelby Stream Platform Treasury
      */
-    public entry fun purchase_read_access(
-        consumer: &signer,
+    public entry fun pay_for_read(
+        user: &signer,
         creator_address: address
     ) acquires PlatformConfig, ContentMetadata {
         let content = borrow_global<ContentMetadata>(creator_address);
@@ -72,16 +66,12 @@ module shelby_stream::marketplace {
         
         // Calculate shares
         let creator_share = (total_price * config.creator_share_bps) / 10000;
-        let storage_share = (total_price * config.storage_provider_share_bps) / 10000;
         let treasury_share = (total_price * config.treasury_share_bps) / 10000;
 
-        // Transfer to Content Creator (85%)
-        coin::transfer<AptosCoin>(consumer, content.creator, creator_share);
+        // Transfer to Content Creator (95%)
+        coin::transfer<AptosCoin>(user, content.creator, creator_share);
         
-        // Transfer to Storage Provider (10%)
-        coin::transfer<AptosCoin>(consumer, config.storage_provider_address, storage_share);
-
         // Transfer to Platform Treasury (5%)
-        coin::transfer<AptosCoin>(consumer, config.treasury_address, treasury_share);
+        coin::transfer<AptosCoin>(user, config.treasury_address, treasury_share);
     }
 }

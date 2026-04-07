@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "ContentMetadata": {
+      "title": "Content Metadata",
+      "description": "Metadata for uploaded content on Shelby Stream",
+      "type": "object",
+      "properties": {
+        "blob_id": {
+          "type": "string",
+          "description": "Unique identifier for the blob on Shelby Fiber Network"
+        },
+        "creator_wallet_address": {
+          "type": "string",
+          "description": "Wallet address of the content creator"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the content"
+        },
+        "thumbnail_url": {
+          "type": "string",
+          "description": "URL of the thumbnail image"
+        },
+        "content_type": {
+          "type": "string",
+          "description": "MIME type of the content (e.g., video/mp4)"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the content was uploaded"
+        }
+      },
+      "required": ["blob_id", "creator_wallet_address", "title", "content_type"]
+    }
+  },
+  "firestore": {
+    "/content": {
+      "schema": "ContentMetadata",
+      "description": "Collection of content metadata"
+    }
+  }
+}

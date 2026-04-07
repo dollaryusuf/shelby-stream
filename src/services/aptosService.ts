@@ -7,7 +7,7 @@ export const SHELBY_MODULE_ADDRESS = "0x1"; // Replace with actual module addres
 
 export const getPurchasePayload = (creatorAddress: string) => {
   return {
-    function: `${SHELBY_MODULE_ADDRESS}::marketplace::purchase_read_access`,
+    function: `${SHELBY_MODULE_ADDRESS}::marketplace::pay_for_read`,
     typeArguments: [],
     functionArguments: [creatorAddress],
   };

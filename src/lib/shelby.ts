@@ -1,7 +1,7 @@
 // Mock implementation of Shelby SDK to avoid build errors with broken package
 export class ShelbyNodeClient {
   constructor(public config: any) {}
-  async uploadBlob(blob: Blob, options?: any): Promise<any> {
+  async uploadBlob(blob: Blob | Buffer, options?: any): Promise<any> {
     console.log("Mock: Uploading blob to Shelby Node...");
     return { id: "mock_blob_id" };
   }
@@ -12,6 +12,11 @@ export class ShelbyClient {
   async getBlobChunk(blobId: string, offset: number, size: number): Promise<any> {
     console.log(`Mock: Fetching chunk for ${blobId} at ${offset}`);
     return new Uint8Array(size);
+  }
+
+  async getBlob(blobId: string): Promise<Uint8Array> {
+    console.log(`Mock: Fetching full blob for ${blobId}`);
+    return new Uint8Array(1024 * 1024); // 1MB mock data
   }
   
   /**
