@@ -3,9 +3,8 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { createServer as createViteServer } from "vite";
-import { getShelbyNode } from "./src/lib/shelby-server";
-import { db } from "./src/lib/firebase-server";
+import { getShelbyNode } from "./src/lib/shelby-server.ts";
+import { db } from "./src/lib/firebase-server.ts";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -71,6 +70,7 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
