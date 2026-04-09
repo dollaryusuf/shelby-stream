@@ -3,8 +3,8 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { getShelbyNode } from "./src/lib/shelby-server";
-import { db } from "./src/lib/firebase-server";
+import { getShelbyNode } from "./src/lib/shelby-server.ts";
+import { db } from "./src/lib/firebase-server.ts";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
