@@ -1,5 +1,5 @@
-import { ShelbyNodeClient } from './shelby.ts';
-import { SHELBY_CONFIG } from '../constants.ts';
+import { ShelbyNodeClient } from './shelby';
+import { SHELBY_CONFIG } from '../constants';
 
 // Initialize Shelby Node Client for server-side operations
 // This client uses the SHELBY_API_KEY which must be kept secret

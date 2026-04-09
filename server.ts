@@ -3,8 +3,8 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { getShelbyNode } from "./src/lib/shelby-server.ts";
-import { db } from "./src/lib/firebase-server.ts";
+import { getShelbyNode } from "./src/lib/shelby-server";
+import { db } from "./src/lib/firebase-server";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -81,13 +81,13 @@ async function startServer() {
     if (fs.existsSync(distPath)) {
       console.log(`Serving static files from: ${distPath}`);
       app.use(express.static(distPath));
-      app.get('*all', (req, res) => {
+      app.get('*', (req, res) => {
         res.sendFile(path.join(distPath, 'index.html'));
       });
     } else {
       console.error(`Critical Error: dist directory not found at ${distPath}`);
       // Fallback for debugging
-      app.get('*all', (req, res) => {
+      app.get('*', (req, res) => {
         res.status(500).send("Production build (dist) missing. Please run 'npm run build'.");
       });
     }
