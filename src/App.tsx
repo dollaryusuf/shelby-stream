@@ -28,6 +28,8 @@ import {
   PieChart
 } from 'lucide-react';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
+import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
 import { VideoUploader } from './components/VideoUploader';
 import { ShelbyPlayer } from './components/ShelbyPlayer';
 import { DatasetMarketplace } from './components/DatasetMarketplace';
@@ -39,26 +41,13 @@ import { FiberMap } from './components/FiberMap';
 export default function App() {
   const [activeTab, setActiveTab] = useState<'consumer' | 'provider' | 'marketplace' | 'staking'>('consumer');
   const { connected, account, disconnect } = useWallet();
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Mock connection for demo if real adapter isn't available in iframe
-  const [mockConnected, setMockConnected] = useState(false);
-  const [mockAddress, setMockAddress] = useState('');
-
-  const isWalletConnected = connected || mockConnected;
-  const walletAddress = account?.address?.toString() || mockAddress;
-
-  const connectWallet = () => {
-    // In a real app, this would open the wallet selector
-    // For this demo, we'll simulate a connection
-    setMockConnected(true);
-    setMockAddress('0x1234...5678');
-  };
+  const walletAddress = account?.address?.toString();
+  const shortAddress = walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : '';
 
   const disconnectWallet = () => {
     if (connected) disconnect();
-    setMockConnected(false);
-    setMockAddress('');
   };
 
   return (
@@ -90,28 +79,50 @@ export default function App() {
                 Provider Dashboard
               </button>
               
-              {isWalletConnected ? (
-                <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 px-4 py-2 rounded-full">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-xs font-mono">{walletAddress}</span>
-                  <button 
-                    onClick={disconnectWallet}
-                    className="text-xs text-slate-500 hover:text-red-400 transition-colors"
-                  >
-                    Disconnect
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={connectWallet}
-                  className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-full text-sm font-semibold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
-                >
-                  Connect Wallet
-                </button>
-              )}
+              <div className="wallet-container">
+                <WalletSelector />
+              </div>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden flex items-center gap-4">
+              <WalletSelector />
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 text-slate-400 hover:text-white transition-colors"
+              >
+                {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden bg-slate-950 border-b border-slate-800 overflow-hidden"
+            >
+              <div className="px-4 py-6 space-y-4">
+                <button 
+                  onClick={() => { setActiveTab('consumer'); setIsMenuOpen(false); }}
+                  className={`block w-full text-left px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'consumer' ? 'bg-blue-500/10 text-blue-400' : 'text-slate-400'}`}
+                >
+                  Explore Content
+                </button>
+                <button 
+                  onClick={() => { setActiveTab('provider'); setIsMenuOpen(false); }}
+                  className={`block w-full text-left px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'provider' ? 'bg-blue-500/10 text-blue-400' : 'text-slate-400'}`}
+                >
+                  Provider Dashboard
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
