@@ -81,13 +81,13 @@ async function startServer() {
     if (fs.existsSync(distPath)) {
       console.log(`Serving static files from: ${distPath}`);
       app.use(express.static(distPath));
-      app.get('*', (req, res) => {
+      app.get('*all', (req, res) => {
         res.sendFile(path.join(distPath, 'index.html'));
       });
     } else {
       console.error(`Critical Error: dist directory not found at ${distPath}`);
       // Fallback for debugging
-      app.get('*', (req, res) => {
+      app.get('*all', (req, res) => {
         res.status(500).send("Production build (dist) missing. Please run 'npm run build'.");
       });
     }
